@@ -2,31 +2,35 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Ardalis.Specification;
+
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+
 using PluralsightDdd.SharedKernel.Interfaces;
 
 namespace FrontDesk.Infrastructure.Data
 {
   public class CachedRepository<T> : IReadRepository<T> where T : class, IAggregateRoot
   {
-    private readonly IMemoryCache _cache;
-    private readonly ILogger<CachedRepository<T>> _logger;
-    private readonly EfRepository<T> _sourceRepository;
-    private MemoryCacheEntryOptions _cacheOptions;
+      private readonly IMemoryCache _cache;
+      private readonly ILogger<CachedRepository<T>> _logger;
+      private readonly EfRepository<T> _sourceRepository;
+      private MemoryCacheEntryOptions _cacheOptions;
 
-    public CachedRepository(IMemoryCache cache,
-        ILogger<CachedRepository<T>> logger,
-        EfRepository<T> sourceRepository)
-    {
-      _cache = cache;
-      _logger = logger;
-      _sourceRepository = sourceRepository;
+      public CachedRepository(
+          IMemoryCache cache,
+          ILogger<CachedRepository<T>> logger,
+          EfRepository<T> sourceRepository)
+      {
+          _cache = cache;
+          _logger = logger;
+          _sourceRepository = sourceRepository;
 
-      _cacheOptions = new MemoryCacheEntryOptions()
-          .SetAbsoluteExpiration(relative: TimeSpan.FromSeconds(10));
-    }
+          _cacheOptions = new MemoryCacheEntryOptions()
+              .SetAbsoluteExpiration(relative: TimeSpan.FromSeconds(10));
+      }
 
     public Task<T> AddAsync(T entity)
     {

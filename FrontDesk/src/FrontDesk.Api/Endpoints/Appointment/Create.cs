@@ -24,7 +24,8 @@ namespace FrontDesk.Api.AppointmentEndpoints
     private readonly IMapper _mapper;
     private readonly ILogger<Create> _logger;
 
-    public Create(IRepository<Schedule> scheduleRepository,
+    public Create(
+      IRepository<Schedule> scheduleRepository,
       IReadRepository<AppointmentType> appointmentTypeReadRepository,
       IMapper mapper,
       ILogger<Create> logger)
@@ -42,13 +43,26 @@ namespace FrontDesk.Api.AppointmentEndpoints
         OperationId = "appointments.create",
         Tags = new[] { "AppointmentEndpoints" })
     ]
-    public override async Task<ActionResult<CreateAppointmentResponse>> HandleAsync(CreateAppointmentRequest request,
+    public override async Task<ActionResult<CreateAppointmentResponse>> HandleAsync(
+      CreateAppointmentRequest request,
       CancellationToken cancellationToken)
     {
       var response = new CreateAppointmentResponse(request.CorrelationId());
 
-      var spec = new ScheduleByIdWithAppointmentsSpec(request.ScheduleId); // TODO: Just get that day's appointments
-      var schedule = await _scheduleRepository.GetBySpecAsync(spec);
+      var spec = new ScheduleByIdWithAppointmentsSpecForGivenDate(
+        request.ScheduleId,
+        request.DateOfAppointment);
+
+      Schedule schedule;
+
+      try
+      {
+        schedule = await _scheduleRepository.GetBySpecAsync(spec);
+      }
+      catch (Exception e)
+      {
+        schedule = null;
+      }
 
       var appointmentType = await _appointmentTypeReadRepository.GetByIdAsync(request.AppointmentTypeId);
       var appointmentStart = request.DateOfAppointment;

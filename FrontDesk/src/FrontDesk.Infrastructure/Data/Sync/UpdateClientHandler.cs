@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace FrontDesk.Infrastructure.Data.Sync
 {
-  public class UpdateClientHandler : IRequestHandler<UpdateClientCommand>
+  public class UpdateClientHandler : IRequestHandler<UpdateClientCommand, int>
   {
     private readonly AppDbContext _dbContext;
     private readonly ILogger<UpdateClientHandler> _logger;
@@ -20,17 +20,18 @@ namespace FrontDesk.Infrastructure.Data.Sync
       _logger = logger;
     }
 
-    public async Task<Unit> Handle(UpdateClientCommand request,
+    public async Task<int> Handle(
+      UpdateClientCommand request,
       CancellationToken cancellationToken)
     {
       _logger.LogInformation($"UpdateClientHandler updating Client {request.Name} to sync with Clinic Management.");
-      var client = _dbContext.Set<Client>().Find(request.Id);
+      var client = await _dbContext.Set<Client>().FindAsync(request.Id);
       var currentName = client.FullName;
 
       if (request.Name == currentName)
       {
         // no change
-        return Unit.Value;
+        return 0;
       }
 
       // use reflection to set name
@@ -40,9 +41,7 @@ namespace FrontDesk.Infrastructure.Data.Sync
 
       UpdateAppointmentTitles(request, currentName);
 
-      _ = await _dbContext.SaveChangesAsync();
-
-      return Unit.Value;
+      return await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private void UpdateAppointmentTitles(UpdateClientCommand request, string currentName)

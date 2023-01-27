@@ -13,7 +13,8 @@ namespace FrontDesk.Core.ScheduleAggregate.Specifications
           .Where(schedule =>
             schedule.ClinicId == clinicId &&
             schedule.Appointments != null)
-          .Include(s => s.Appointments.Where(a => a.TimeRange.Start > date && a.TimeRange.End < endDate));
+          .Include(s => s.Appointments
+            .Where(a => a.TimeRange.Start > date && a.TimeRange.End < endDate));
     }
   }
 }

@@ -15,7 +15,9 @@ namespace FrontDesk.Infrastructure.Data
   {
     private readonly IMediator _mediator;
 
-    public AppDbContext(DbContextOptions<AppDbContext> options, IMediator mediator)
+    public AppDbContext(
+      DbContextOptions<AppDbContext> options, 
+      IMediator mediator)
         : base(options)
     {
       _mediator = mediator;
@@ -35,7 +37,6 @@ namespace FrontDesk.Infrastructure.Data
       modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
     }
 
-    // TODO: Use DbContext.SavedChanges event and handler to support events
     // https://docs.microsoft.com/en-us/ef/core/logging-events-diagnostics/events
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
     {
@@ -56,7 +57,7 @@ namespace FrontDesk.Infrastructure.Data
         entity.Events.Clear();
         foreach (var domainEvent in events)
         {
-          await _mediator.Publish(domainEvent).ConfigureAwait(false);
+          await _mediator.Publish(domainEvent, cancellationToken).ConfigureAwait(false);
         }
       }
 

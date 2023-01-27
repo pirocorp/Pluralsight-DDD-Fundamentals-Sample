@@ -103,12 +103,14 @@ namespace FrontDesk.Blazor.Pages
       Logger.LogInformation($"Loaded schedule: {schedule.Id}");
       ScheduleId = schedule.Id;
 
-      SchedulerService.Appointments = await AppointmentService.ListAsync(ScheduleId);
+      SchedulerService.Appointments = await AppointmentService.ListAsync(ScheduleId, Today);
       AppointmentTypes = await AppointmentTypeService.ListAsync();
       Clients = await ClientService.ListAsync();
       Rooms = await RoomService.ListAsync();
 
       Today = await ConfigurationService.ReadAsync();
+      Logger.LogInformation($"Today: {this.Today}");
+
       StartDate = UpdateDateToToday(StartDate);
       DayStart = UpdateDateToToday(DayStart);
       DayEnd = UpdateDateToToday(DayEnd);
@@ -207,10 +209,17 @@ namespace FrontDesk.Blazor.Pages
       hubConnection.On<string>("ReceiveMessage", async (message) =>
       {
         Logger.LogInformation($"ReceiveMessage: {message}");
+
         if (message.Contains("Client") && message.Contains("updated"))
         {
           await RefreshClientsAsync();
         }
+
+        if (message.Contains("Room") && message.Contains("updated"))
+        {
+          await RefreshRoomsAsync();
+        }
+
         await RefreshAppointmentsAsync();
         ToastService.SendMessage(message);
       });
@@ -221,6 +230,11 @@ namespace FrontDesk.Blazor.Pages
     private async Task RefreshClientsAsync()
     {
       Clients = await ClientService.ListAsync();
+    }
+
+    private async Task RefreshRoomsAsync()
+    {
+      Rooms = await RoomService.ListAsync();
     }
 
     private Task CancelEditing()
@@ -234,7 +248,7 @@ namespace FrontDesk.Blazor.Pages
       //an event callback needs to be raised in this component context to re-render the contents and to hide the dialog
       CustomEditFormShown = false;
       CurrentAppointment = null;
-      var appointments = await AppointmentService.ListAsync(ScheduleId);
+      var appointments = await AppointmentService.ListAsync(ScheduleId, this.DayStart);
       SchedulerService.RefreshAppointments(appointments);
     }
 

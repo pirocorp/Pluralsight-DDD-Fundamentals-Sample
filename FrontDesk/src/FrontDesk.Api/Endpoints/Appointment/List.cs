@@ -49,7 +49,8 @@ namespace FrontDesk.Api.AppointmentEndpoints
         OperationId = "appointments.List",
         Tags = new[] { "AppointmentEndpoints" })
     ]
-    public override async Task<ActionResult<ListAppointmentResponse>> HandleAsync([FromRoute] ListAppointmentRequest request,
+    public override async Task<ActionResult<ListAppointmentResponse>> HandleAsync(
+      [FromRoute] ListAppointmentRequest request,
       CancellationToken cancellationToken)
     {
       var response = new ListAppointmentResponse(request.CorrelationId());
@@ -59,9 +60,9 @@ namespace FrontDesk.Api.AppointmentEndpoints
         return NotFound();
       }
 
-      // TODO: Get date from API request and use a specification that only includes appointments on that date.
       var spec = new ScheduleByIdWithAppointmentsSpec(request.ScheduleId);
-      schedule = await _scheduleRepository.GetBySpecAsync(spec);
+
+      schedule = await _scheduleRepository.GetBySpecAsync(spec, cancellationToken);
       if (schedule == null) throw new ScheduleNotFoundException($"No schedule found for id {request.ScheduleId}.");
 
       int conflictedAppointmentsCount = schedule.Appointments

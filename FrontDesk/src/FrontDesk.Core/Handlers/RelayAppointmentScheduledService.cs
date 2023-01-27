@@ -38,7 +38,8 @@ namespace FrontDesk.Core.Handlers
       _logger = logger;
     }
 
-    public async Task Handle(AppointmentScheduledEvent appointmentScheduledEvent,
+    public async Task Handle(
+      AppointmentScheduledEvent appointmentScheduledEvent,
       CancellationToken cancellationToken)
     {
       _logger.LogInformation("Handling appointmentScheduledEvent");

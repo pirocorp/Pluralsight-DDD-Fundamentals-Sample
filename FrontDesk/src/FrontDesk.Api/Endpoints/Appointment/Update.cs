@@ -1,15 +1,18 @@
-﻿using System.Linq;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
+
 using Ardalis.ApiEndpoints;
 using AutoMapper;
 using BlazorShared.Models.Appointment;
-using FrontDesk.Core.SyncedAggregates;
+
 using FrontDesk.Core.ScheduleAggregate.Specifications;
+using FrontDesk.Core.ScheduleAggregate;
+using FrontDesk.Core.SyncedAggregates;
+
 using Microsoft.AspNetCore.Mvc;
 using PluralsightDdd.SharedKernel.Interfaces;
 using Swashbuckle.AspNetCore.Annotations;
-using FrontDesk.Core.ScheduleAggregate;
+
 
 namespace FrontDesk.Api.AppointmentEndpoints
 {
@@ -40,27 +43,34 @@ namespace FrontDesk.Api.AppointmentEndpoints
         OperationId = "appointments.update",
         Tags = new[] { "AppointmentEndpoints" })
     ]
-    public override async Task<ActionResult<UpdateAppointmentResponse>> HandleAsync(UpdateAppointmentRequest request,
+    public override async Task<ActionResult<UpdateAppointmentResponse>> HandleAsync(
+      UpdateAppointmentRequest request,
       CancellationToken cancellationToken)
     {
       var response = new UpdateAppointmentResponse(request.CorrelationId());
 
-      var apptType = await _appointmentTypeRepository.GetByIdAsync(request.AppointmentTypeId);
+      var appointmentType = await _appointmentTypeRepository
+        .GetByIdAsync(request.AppointmentTypeId, cancellationToken);
 
-      var spec = new ScheduleByIdWithAppointmentsSpec(request.ScheduleId); // TODO: Just get that day's appointments
-      var schedule = await _scheduleReadRepository.GetBySpecAsync(spec);
+      var appointmentSpec = new AppointmentById(request.Id);
+      var appointmentToUpdate = await _scheduleReadRepository
+        .GetBySpecAsync<Appointment>(appointmentSpec, cancellationToken);
 
-      var apptToUpdate = schedule.Appointments
-                            .FirstOrDefault(a => a.Id == request.Id);
-      apptToUpdate.UpdateAppointmentType(apptType, schedule.AppointmentUpdatedHandler);
-      apptToUpdate.UpdateRoom(request.RoomId);
-      apptToUpdate.UpdateStartTime(request.Start, schedule.AppointmentUpdatedHandler);
-      apptToUpdate.UpdateTitle(request.Title);
-      apptToUpdate.UpdateDoctor(request.DoctorId);
+      var spec = new ScheduleByIdWithAppointmentsSpecForGivenDate(
+        request.ScheduleId,
+        appointmentToUpdate.TimeRange.Start);
 
-      await _scheduleRepository.UpdateAsync(schedule);
+      var schedule = await _scheduleReadRepository.GetBySpecAsync(spec, cancellationToken);
 
-      var dto = _mapper.Map<AppointmentDto>(apptToUpdate);
+      appointmentToUpdate.UpdateAppointmentType(appointmentType, schedule.AppointmentUpdatedHandler);
+      appointmentToUpdate.UpdateRoom(request.RoomId);
+      appointmentToUpdate.UpdateStartTime(request.Start, schedule.AppointmentUpdatedHandler);
+      appointmentToUpdate.UpdateTitle(request.Title);
+      appointmentToUpdate.UpdateDoctor(request.DoctorId);
+
+      await _scheduleRepository.UpdateAsync(schedule, cancellationToken);
+
+      var dto = _mapper.Map<AppointmentDto>(appointmentToUpdate);
       response.Appointment = dto;
 
       return Ok(response);

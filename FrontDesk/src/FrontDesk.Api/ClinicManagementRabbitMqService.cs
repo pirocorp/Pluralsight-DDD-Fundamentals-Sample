@@ -106,7 +106,6 @@ namespace FrontDesk.Api
     {
       _logger.LogInformation($"Handling Message: {message}");
 
-      // TODO: A real app would have better error handling for parsing and routing messages
       using var doc = JsonDocument.Parse(message);
       var root = doc.RootElement;
       var eventType = root.GetProperty("EventType");
@@ -129,6 +128,7 @@ namespace FrontDesk.Api
         string notification = $"New Doctor {name} added in Clinic Management. ";
         await _scheduleHub.Clients.All.SendAsync("ReceiveMessage", notification);
       }
+
       if (eventType.GetString() == "Client-Updated")
       {
         int id = entity.GetProperty("Id").GetInt32();
@@ -138,13 +138,55 @@ namespace FrontDesk.Api
           Id = id,
           Name = name
         };
-        await mediator.Send(command);
 
-        // TODO: Only send notification if changes occurred
-        string notification = $"Client {name} updated in Clinic Management.";
-        await _scheduleHub.Clients.All.SendAsync("ReceiveMessage", notification);
+        var result = await mediator.Send(command);
+
+        if (result != 0)
+        {
+          string notification = $"Client {name} updated in Clinic Management.";
+          await _scheduleHub.Clients.All.SendAsync("ReceiveMessage", notification);
+        }
       }
-      // TODO: Implement other kinds of updates
+
+      if (eventType.GetString() == "Doctor-Updated")
+      {
+        int id = entity.GetProperty("Id").GetInt32();
+        string name = entity.GetProperty("Name").GetString();
+
+        var command = new UpdateDoctorCommand()
+        {
+          Id = id,
+          Name = name
+        };
+
+        var result = await mediator.Send(command);
+
+        if (result != 0)
+        {
+          string notification = $"Doctor {name} updated in Clinic Management.";
+          await _scheduleHub.Clients.All.SendAsync("ReceiveMessage", notification);
+        }
+      }
+
+      if (eventType.GetString() == "Room-Updated")
+      {
+        int id = entity.GetProperty("Id").GetInt32();
+        string name = entity.GetProperty("Name").GetString();
+
+        var command = new UpdateRoomCommand()
+        {
+          Id = id,
+          Name = name
+        };
+
+        var result = await mediator.Send(command);
+
+        if (result != 0)
+        {
+          string notification = $"Room {name} updated in Clinic Management.";
+          await _scheduleHub.Clients.All.SendAsync("ReceiveMessage", notification);
+        }
+      }
     }
 
     public override void Dispose()

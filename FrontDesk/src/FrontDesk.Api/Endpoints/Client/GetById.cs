@@ -10,6 +10,8 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace FrontDesk.Api.ClientEndpoints
 {
+  using Core.SyncedAggregates.Specifications;
+
   public class GetById : BaseAsyncEndpoint
     .WithRequest<GetByIdClientRequest>
     .WithResponse<GetByIdClientResponse>
@@ -31,13 +33,14 @@ namespace FrontDesk.Api.ClientEndpoints
         OperationId = "clients.GetById",
         Tags = new[] { "ClientEndpoints" })
     ]
-    public override async Task<ActionResult<GetByIdClientResponse>> HandleAsync([FromRoute] GetByIdClientRequest request,
+    public override async Task<ActionResult<GetByIdClientResponse>> HandleAsync(
+      [FromRoute] GetByIdClientRequest request,
       CancellationToken cancellationToken)
     {
       var response = new GetByIdClientResponse(request.CorrelationId());
 
-      // TODO: Use specification and consider including patients
-      var client = await _repository.GetByIdAsync(request.ClientId);
+      var spec = new ClientByIdIncludePatientsSpecification(request.ClientId);
+      var client = await _repository.GetBySpecAsync(spec, cancellationToken);
       if (client is null) return NotFound();
 
       response.Client = _mapper.Map<ClientDto>(client);

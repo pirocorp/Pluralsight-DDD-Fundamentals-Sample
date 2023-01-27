@@ -10,7 +10,10 @@ namespace FrontDesk.Core.ScheduleAggregate
 {
   public class Schedule : BaseEntity<Guid>, IAggregateRoot
   {
-    public Schedule(Guid id,
+    private readonly List<Appointment> _appointments = new List<Appointment>();
+
+    public Schedule(
+      Guid id,
       DateTimeOffsetRange dateRange,
       int clinicId)
     {
@@ -26,7 +29,7 @@ namespace FrontDesk.Core.ScheduleAggregate
     }
 
     public int ClinicId { get; private set; }
-    private readonly List<Appointment> _appointments = new List<Appointment>();
+
     public IEnumerable<Appointment> Appointments => _appointments.AsReadOnly();
 
     public DateTimeOffsetRange DateRange { get; private set; }
@@ -59,28 +62,26 @@ namespace FrontDesk.Core.ScheduleAggregate
 
       MarkConflictingAppointments();
 
-      // TODO: Add appointment deleted event and show delete message in Blazor client app
+      var appointmentDeletedEvent = new AppointmentDeletedEvent(appointment);
+      Events.Add(appointmentDeletedEvent);
     }
-
-
-
 
     private void MarkConflictingAppointments()
     {
       foreach (var appointment in _appointments)
       {
-        // same patient cannot have two appointments at same time
         var potentiallyConflictingAppointments = _appointments
-            .Where(a => a.PatientId == appointment.PatientId &&
-            a.TimeRange.Overlaps(appointment.TimeRange) &&
-            a != appointment)
+            .Where(
+              a => 
+                   (a.PatientId == appointment.PatientId // Same patient cannot have two appointments at same time
+                    || a.RoomId == appointment.RoomId // Same room cannot have two appointments at same time
+                    || a.DoctorId == appointment.DoctorId // Same doctor cannot have two appointments at same time
+                   )
+                   && a.TimeRange.Overlaps(appointment.TimeRange) 
+                   && a != appointment)
             .ToList();
 
-        // TODO: Add a rule to mark overlapping appointments in same room as conflicting
-        // TODO: Add a rule to mark same doctor with overlapping appointments as conflicting
-
         potentiallyConflictingAppointments.ForEach(a => a.IsPotentiallyConflicting = true);
-
         appointment.IsPotentiallyConflicting = potentiallyConflictingAppointments.Any();
       }
     }
@@ -90,7 +91,6 @@ namespace FrontDesk.Core.ScheduleAggregate
     /// </summary>
     public void AppointmentUpdatedHandler()
     {
-      // TODO: Add ScheduleHandler calls to UpdateDoctor, UpdateRoom to complete additional rules described in MarkConflictingAppointments
       MarkConflictingAppointments();
     }
   }

@@ -1,16 +1,20 @@
 ﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Ardalis.ApiEndpoints;
 using AutoMapper;
 using BlazorShared.Models.Appointment;
-using FrontDesk.Core.SyncedAggregates;
+
+using FrontDesk.Core.Interfaces;
+using FrontDesk.Core.ScheduleAggregate;
 using FrontDesk.Core.ScheduleAggregate.Specifications;
+using FrontDesk.Core.SyncedAggregates;
+using FrontDesk.Core.SyncedAggregates.Specifications;
+
 using Microsoft.AspNetCore.Mvc;
 using PluralsightDdd.SharedKernel.Interfaces;
 using Swashbuckle.AspNetCore.Annotations;
-using FrontDesk.Core.ScheduleAggregate;
-using FrontDesk.Core.SyncedAggregates.Specifications;
 
 namespace FrontDesk.Api.AppointmentEndpoints
 {
@@ -22,7 +26,8 @@ namespace FrontDesk.Api.AppointmentEndpoints
     private readonly IReadRepository<Client> _clientRepository;
     private readonly IMapper _mapper;
 
-    public GetById(IReadRepository<Schedule> scheduleRepository,
+    public GetById(
+      IReadRepository<Schedule> scheduleRepository,
       IReadRepository<Client> clientRepository,
       IMapper mapper)
     {
@@ -38,21 +43,25 @@ namespace FrontDesk.Api.AppointmentEndpoints
         OperationId = "appointments.GetById",
         Tags = new[] { "AppointmentEndpoints" })
     ]
-    public override async Task<ActionResult<GetByIdAppointmentResponse>> HandleAsync([FromRoute] GetByIdAppointmentRequest request, CancellationToken cancellationToken)
+
+    public override async Task<ActionResult<GetByIdAppointmentResponse>> HandleAsync(
+      [FromRoute] GetByIdAppointmentRequest request, 
+      CancellationToken cancellationToken)
     {
       var response = new GetByIdAppointmentResponse(request.CorrelationId());
 
-      var spec = new ScheduleByIdWithAppointmentsSpec(request.ScheduleId); // TODO: Just get that day's appointments
-      var schedule = await _scheduleRepository.GetBySpecAsync(spec);
+      var appointmentSpec = new AppointmentById(request.AppointmentId);
 
-      var appointment = schedule.Appointments.FirstOrDefault(a => a.Id == request.AppointmentId);
+      var appointment = await _scheduleRepository
+        .GetBySpecAsync<Appointment>(appointmentSpec, cancellationToken);
+
       if (appointment == null) return NotFound();
 
       response.Appointment = _mapper.Map<AppointmentDto>(appointment);
 
       // load names
       var clientSpec = new ClientByIdIncludePatientsSpecification(appointment.ClientId);
-      var client = await _clientRepository.GetBySpecAsync(clientSpec);
+      var client = await _clientRepository.GetBySpecAsync(clientSpec, cancellationToken);
       var patient = client.Patients.First(p => p.Id == appointment.PatientId);
 
       response.Appointment.ClientName = client.FullName;
@@ -61,6 +70,4 @@ namespace FrontDesk.Api.AppointmentEndpoints
       return Ok(response);
     }
   }
-
-
 }

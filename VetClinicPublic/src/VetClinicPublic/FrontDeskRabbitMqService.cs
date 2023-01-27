@@ -74,17 +74,7 @@ namespace VetClinicPublic
         throw;
       }
     }
-
-
-
-
-
-
-
-
-
-
-
+    
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
       stoppingToken.ThrowIfCancellationRequested();
@@ -99,19 +89,6 @@ namespace VetClinicPublic
       return Task.CompletedTask;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
     private async void OnMessageReceived(object model, BasicDeliverEventArgs args)
     {
       var body = args.Body.ToArray();
@@ -119,20 +96,6 @@ namespace VetClinicPublic
 
       await HandleMessage(message);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private async Task HandleMessage(string message)
     {

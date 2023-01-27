@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using BlazorShared.Models.Room;
+
+using ClinicManagement.Api.ApplicationEvents;
 using ClinicManagement.Core.Aggregates;
 
 namespace ClinicManagement.Api.MappingProfiles
@@ -16,6 +18,7 @@ namespace ClinicManagement.Api.MappingProfiles
       CreateMap<UpdateRoomRequest, Room>()
           .ForMember(dto => dto.Id, options => options.MapFrom(src => src.RoomId));
       CreateMap<DeleteRoomRequest, Room>();
+      CreateMap<Room, NamedEntity>();
     }
   }
 }

@@ -44,7 +44,7 @@ namespace FrontDesk.Blazor.Services
       return (await _httpService.HttpGetAsync<GetByIdAppointmentResponse>(route)).Appointment;
     }
 
-    public async Task<List<AppointmentDto>> ListAsync(Guid scheduleId)
+    public async Task<List<AppointmentDto>> ListAsync(Guid scheduleId, DateTime today)
     {
       _logger.LogInformation("Fetching appointments from API.");
 

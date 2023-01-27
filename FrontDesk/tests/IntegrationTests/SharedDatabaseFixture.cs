@@ -20,7 +20,7 @@ namespace IntegrationTests
 
     public SharedDatabaseFixture()
     {
-      Connection = new SqlConnection(@"Server=(localdb)\mssqllocaldb;Database=PluralsightDDD.FrontDesk.IntegrationTests;ConnectRetryCount=0");
+      Connection = new SqlConnection(@"Server=PIRO\SQLEXPRESS2019;Integrated Security=true;Initial Catalog=PluralsightDDD.FrontDesk.IntegrationTests;");
 
       Seed();
 

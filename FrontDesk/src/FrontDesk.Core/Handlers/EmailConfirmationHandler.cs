@@ -40,7 +40,8 @@ namespace FrontDesk.Core.Handlers
       var schedule = (await _scheduleRepository.GetBySpecAsync(scheduleSpec));
       Guard.Against.Null(schedule, nameof(Schedule));
 
-      var appointmentToConfirm = schedule.Appointments.FirstOrDefault(a => a.Id == appointmentConfirmedEvent.AppointmentId);
+      var appointmentToConfirm = schedule.Appointments
+        .FirstOrDefault(a => a.Id == appointmentConfirmedEvent.AppointmentId);
 
       appointmentToConfirm.Confirm(appointmentConfirmedEvent.DateOccurred);
 

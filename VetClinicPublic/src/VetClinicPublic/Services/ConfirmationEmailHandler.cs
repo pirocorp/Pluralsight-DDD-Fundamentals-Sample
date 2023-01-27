@@ -12,7 +12,8 @@ namespace VetClinicPublic.Web.Services
     readonly ILogger<ConfirmationEmailHandler> _logger;
     private readonly ISendConfirmationEmails _emailSender;
 
-    public ConfirmationEmailHandler(ILogger<ConfirmationEmailHandler> logger,
+    public ConfirmationEmailHandler(
+      ILogger<ConfirmationEmailHandler> logger,
       ISendConfirmationEmails emailSender)
     {
       _logger = logger;

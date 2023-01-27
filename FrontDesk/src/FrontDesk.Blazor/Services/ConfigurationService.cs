@@ -23,7 +23,7 @@ namespace FrontDesk.Blazor.Services
       var stringDateTimeOffset = await _httpService.HttpGetAsync($"api/configurations");
       var dateTimeWithOffset = DateTimeOffset.Parse(stringDateTimeOffset, CultureInfo.InvariantCulture);
 
-      return dateTimeWithOffset.UtcDateTime;
+      return dateTimeWithOffset.LocalDateTime;
     }
   }
 }

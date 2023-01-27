@@ -52,7 +52,6 @@ namespace ClinicManagement.Api.ClientEndpoints
       var appEvent = new NamedEntityUpdatedEvent(_mapper.Map<NamedEntity>(toUpdate), "Client-Updated");
       _messagePublisher.Publish(appEvent);
 
-
       return Ok(response);
     }
   }

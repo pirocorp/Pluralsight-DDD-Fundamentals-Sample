@@ -12,6 +12,7 @@ namespace FrontDesk.Core.Events
     }
 
     public Guid Id { get; private set; } = Guid.NewGuid();
+
     public Appointment AppointmentUpdated { get; private set; }
   }
 }

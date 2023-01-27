@@ -15,16 +15,18 @@ using Xunit;
 
 namespace FunctionalTests
 {
+  using Microsoft.Data.SqlClient;
+
   public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<Startup>
   {
-    private readonly string _connectionString = "Data Source=functionaltests.db";
-    private readonly SqliteConnection _connection;
+    private readonly string _connectionString = @"Server=PIRO\SQLEXPRESS2019;Integrated Security=true;Initial Catalog=PluralsightDDD.FrontDesk.IntegrationTests;";
+    private readonly SqlConnection _connection;
 
     public CustomWebApplicationFactory()
     {
       string guid = Guid.NewGuid().ToString();
-      string connString = _connectionString.Replace(".db", $"-{guid}.db");
-      _connection = new SqliteConnection(connString);
+      string connString = _connectionString.Replace("PluralsightDDD.FrontDesk.FunctionalTests", $"PluralsightDDD.FrontDesk.FunctionalTests.{guid}");
+      _connection = new SqlConnection(connString);
       _connection.Open();
     }
 
@@ -82,10 +84,10 @@ namespace FunctionalTests
             }
 
             services
-              .AddEntityFrameworkSqlite()
+              .AddEntityFrameworkSqlServer()
                 .AddDbContext<AppDbContext>(options =>
                 {
-                  options.UseSqlite(_connection);
+                  options.UseSqlServer(_connection);
                   options.UseInternalServiceProvider(services.BuildServiceProvider());
                 });
 

@@ -10,17 +10,25 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace ClinicManagement.Api.RoomEndpoints
 {
+  using ApplicationEvents;
+  using ClinicManagement.Core.Interfaces;
+
   public class Update : BaseAsyncEndpoint
     .WithRequest<UpdateRoomRequest>
     .WithResponse<UpdateRoomResponse>
   {
     private readonly IRepository<Room> _repository;
     private readonly IMapper _mapper;
+    private readonly IMessagePublisher _messagePublisher;
 
-    public Update(IRepository<Room> repository, IMapper mapper)
+    public Update(
+      IRepository<Room> repository, 
+      IMapper mapper, 
+      IMessagePublisher messagePublisher)
     {
       _repository = repository;
       _mapper = mapper;
+      _messagePublisher = messagePublisher;
     }
 
     [HttpPut("api/rooms")]
@@ -30,7 +38,9 @@ namespace ClinicManagement.Api.RoomEndpoints
         OperationId = "rooms.update",
         Tags = new[] { "RoomEndpoints" })
     ]
-    public override async Task<ActionResult<UpdateRoomResponse>> HandleAsync(UpdateRoomRequest request, CancellationToken cancellationToken)
+    public override async Task<ActionResult<UpdateRoomResponse>> HandleAsync(
+      UpdateRoomRequest request, 
+      CancellationToken cancellationToken)
     {
       var response = new UpdateRoomResponse(request.CorrelationId);
 
@@ -39,6 +49,12 @@ namespace ClinicManagement.Api.RoomEndpoints
 
       var dto = _mapper.Map<RoomDto>(toUpdate);
       response.Room = dto;
+
+      var appEvent = new NamedEntityUpdatedEvent(
+        _mapper.Map<NamedEntity>(toUpdate), 
+        "Room-Updated");
+
+      _messagePublisher.Publish(appEvent);
 
       return Ok(response);
     }

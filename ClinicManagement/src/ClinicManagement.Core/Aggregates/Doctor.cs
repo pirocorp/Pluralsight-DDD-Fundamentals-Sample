@@ -7,6 +7,11 @@ namespace ClinicManagement.Core.Aggregates
   {
     public string Name { get; set; }
 
+    private Doctor()
+    {
+
+    }
+
     public Doctor(int id, string name)
     {
       Id = id;

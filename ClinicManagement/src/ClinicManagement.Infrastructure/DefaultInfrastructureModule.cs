@@ -42,6 +42,7 @@ namespace ClinicManagement.Infrastructure
       {
         RegisterProductionOnlyDependencies(builder);
       }
+
       RegisterCommonDependencies(builder);
     }
 
@@ -104,6 +105,5 @@ namespace ClinicManagement.Infrastructure
     {
       // TODO: Add production only services
     }
-
   }
 }

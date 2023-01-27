@@ -35,22 +35,30 @@ namespace FrontDesk.Api.AppointmentEndpoints
         OperationId = "appointments.delete",
         Tags = new[] { "AppointmentEndpoints" })
     ]
-    public override async Task<ActionResult<DeleteAppointmentResponse>> HandleAsync([FromRoute] DeleteAppointmentRequest request, CancellationToken cancellationToken)
+    public override async Task<ActionResult<DeleteAppointmentResponse>> HandleAsync(
+      [FromRoute] DeleteAppointmentRequest request, 
+      CancellationToken cancellationToken)
     {
       var response = new DeleteAppointmentResponse(request.CorrelationId());
 
-      var spec = new ScheduleByIdWithAppointmentsSpec(request.ScheduleId); // TODO: Just get that day's appointments
-      var schedule = await _scheduleReadRepository.GetBySpecAsync(spec);
+      var appointmentSpec = new AppointmentById(request.AppointmentId);
+      var appointment = await _scheduleReadRepository
+        .GetBySpecAsync<Appointment>(appointmentSpec, cancellationToken);
 
-      var apptToDelete = schedule.Appointments.FirstOrDefault(a => a.Id == request.AppointmentId);
-      if (apptToDelete == null) return NotFound();
+      var scheduleSpec = new ScheduleByIdWithAppointmentsSpecForGivenDate(
+        request.ScheduleId,
+        appointment.TimeRange.Start); 
 
-      schedule.DeleteAppointment(apptToDelete);
+      var schedule = await _scheduleReadRepository.GetBySpecAsync(scheduleSpec, cancellationToken);
 
-      await _scheduleRepository.UpdateAsync(schedule);
+      if (appointment == null) return NotFound();
+
+      schedule?.DeleteAppointment(appointment);
+
+      await _scheduleRepository.UpdateAsync(schedule, cancellationToken);
 
       // verify we can still get the schedule
-      response.Schedule = _mapper.Map<ScheduleDto>(await _scheduleReadRepository.GetBySpecAsync(spec));
+      response.Schedule = _mapper.Map<ScheduleDto>(await _scheduleReadRepository.GetBySpecAsync(scheduleSpec));
  
       return Ok(response);
     }
